@@ -22,10 +22,18 @@ export default function MainScreen() {
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!loading && sessions.length > 0 && !activeSessionId && !sessions.find(s => s.id === activeSessionId)) {
-      setActiveSessionId(sessions[0].id);
+    if (!loading) {
+      if (sessions.length === 0) {
+        createSession().then((id) => {
+          if (id) setActiveSessionId(id);
+        });
+      } else if (sessions.length > 0 && !activeSessionId) {
+        setActiveSessionId(sessions[0].id);
+      } else if (sessions.length > 0 && activeSessionId && !sessions.find(s => s.id === activeSessionId)) {
+        setActiveSessionId(sessions[0].id);
+      }
     }
-  }, [loading, sessions, activeSessionId]);
+  }, [loading, sessions.length, activeSessionId, createSession]);
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
 

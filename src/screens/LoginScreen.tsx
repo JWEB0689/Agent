@@ -22,7 +22,7 @@ export default function LoginScreen() {
           className="flex w-full items-center justify-center gap-3 bg-white hover:bg-neutral-200 text-black font-medium py-3 px-4 rounded-xl transition-colors disabled:opacity-50"
         >
           <LogIn size={20} />
-          {loading ? 'Initializing...' : 'Sign in with Google'}
+          {loading ? 'Initializing...' : 'Enter Agent Workspace'}
         </button>
         
         <p className="text-xs text-neutral-500 mt-6 mt-8">

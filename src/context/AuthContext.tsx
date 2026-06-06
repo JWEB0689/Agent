@@ -1,11 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from 'firebase/auth';
-import { auth, signIn, signOut } from '../firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db, handleFirestoreError } from '../firebase';
+import React, { createContext, useContext, useState } from 'react';
 
 interface AuthContextType {
-  user: User | null;
+  user: any;
   loading: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
@@ -14,48 +10,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>({ uid: 'local_operator', email: 'operator@local.network' });
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-      setUser(currentUser);
-      
-      if (currentUser) {
-        // Ensure user document exists
-        try {
-          const userRef = doc(db, 'users', currentUser.uid);
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-            await setDoc(userRef, {
-              email: currentUser.email,
-              createdAt: serverTimestamp(),
-              theme: 'dark'
-            });
-          }
-        } catch (error) {
-          console.error("Failed to initialize user document", error);
-        }
-      }
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  const login = async () => {
-    try {
-      await signIn();
-    } catch (error: any) {
-      if (error.code !== 'auth/popup-closed-by-user') {
-        console.error('Login failed:', error);
-      }
-    }
-  };
-
-  const logout = async () => {
-    await signOut();
-  };
+  const login = async () => {};
+  const logout = async () => setUser(null);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>

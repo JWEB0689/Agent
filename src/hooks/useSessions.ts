@@ -1,110 +1,64 @@
-import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import { db, handleFirestoreError } from '../firebase';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
 import { Session, Message } from '../types';
 
 export function useSessions() {
-  const { user } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      setSessions([]);
+    try {
+      const stored = localStorage.getItem('agent_sessions');
+      if (stored) {
+        setSessions(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Failed to load sessions', e);
+    } finally {
       setLoading(false);
-      return;
     }
+  }, []);
 
-    try {
-      const q = query(
-        collection(db, 'sessions'),
-        where('uid', '==', user.uid),
-        orderBy('updatedAt', 'desc')
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const sessionData: Session[] = [];
-        snapshot.forEach((p) => {
-          sessionData.push({ id: p.id, ...p.data() } as Session);
-        });
-        setSessions(sessionData);
-        setLoading(false);
-      }, (error) => {
-        console.error("Session fetch error:", error);
-        handleFirestoreError(error);
-      });
-
-      return () => unsubscribe();
-    } catch (error) {
-      handleFirestoreError(error);
+  useEffect(() => {
+    if (!loading) {
+      localStorage.setItem('agent_sessions', JSON.stringify(sessions));
     }
-  }, [user]);
+  }, [sessions, loading]);
 
-  const createSession = async (title: string = 'New Conversation') => {
-    if (!user) return null;
-    try {
-      const newSessionInfo = {
-        uid: user.uid,
-        title,
-        systemPromptId: 'default',
-        modelId: 'llama-3',
-        providerId: 'local',
-        temperature: 0.7,
-        maxTokens: 2048,
-        createdAt: new Date().toISOString(),
-        updatedAt: serverTimestamp(),
-        messages: [],
-        rtkConfig: {
-          enabled: true,
-          compressionRatio: 0.8,
-          slidingWindowSize: 4000,
-          dynamicBypass: true,
-          modelRoute: 'local_fallback'
-        }
-      };
-      const docRef = await addDoc(collection(db, 'sessions'), newSessionInfo);
-      return docRef.id;
-    } catch (error) {
-       handleFirestoreError(error);
-    }
-  };
+  const createSession = useCallback(async (title: string = 'New Conversation') => {
+    const newSession: Session = {
+      id: Date.now().toString(),
+      uid: 'local',
+      title,
+      systemPromptId: 'default',
+      modelId: 'llama-3',
+      providerId: 'local',
+      temperature: 0.7,
+      maxTokens: 2048,
+      createdAt: new Date().toISOString(),
+      messages: [],
+      rtkConfig: {
+        enabled: true,
+        compressionRatio: 0.8,
+        slidingWindowSize: 4000,
+        dynamicBypass: true,
+        modelRoute: 'local_fallback'
+      }
+    };
+    setSessions(prev => [newSession, ...prev]);
+    return newSession.id;
+  }, []);
 
-  const updateSessionMessages = async (sessionId: string, messages: Message[]) => {
-    if (!user) return;
-    try {
-      const sessionRef = doc(db, 'sessions', sessionId);
-      await updateDoc(sessionRef, {
-        messages,
-        updatedAt: serverTimestamp()
-      });
-    } catch (error) {
-      handleFirestoreError(error);
-    }
-  };
+  const updateSessionMessages = useCallback(async (sessionId: string, messages: Message[]) => {
+    setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages } : s));
+  }, []);
 
-  const updateSessionConfig = async (sessionId: string, updates: Partial<Session>) => {
-    if (!user) return;
-    try {
-      const sessionRef = doc(db, 'sessions', sessionId);
-      await updateDoc(sessionRef, {
-        ...updates,
-        updatedAt: serverTimestamp()
-      });
-    } catch (error) {
-      handleFirestoreError(error);
-    }
-  };
+  const updateSessionConfig = useCallback(async (sessionId: string, updates: Partial<Session>) => {
+    setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, ...updates } : s));
+  }, []);
   
-  const deleteSession = async (sessionId: string) => {
-    if (!user) return;
-    try {
-      const sessionRef = doc(db, 'sessions', sessionId);
-      await deleteDoc(sessionRef);
-    } catch (error) {
-      handleFirestoreError(error);
-    }
-  }
+  const deleteSession = useCallback(async (sessionId: string) => {
+    setSessions(prev => prev.filter(s => s.id !== sessionId));
+  }, []);
 
   return { sessions, loading, createSession, updateSessionMessages, updateSessionConfig, deleteSession };
 }

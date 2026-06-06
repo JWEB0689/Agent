@@ -54,6 +54,11 @@ function createWindow() {
     });
   }
 
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    // Allow popups for Firebase Auth
+    return { action: 'allow' };
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

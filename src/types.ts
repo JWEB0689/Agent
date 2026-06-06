@@ -23,8 +23,17 @@ export interface Message {
   };
 }
 
+export interface RTKConfiguration {
+  enabled: boolean;
+  compressionRatio: number; // 0.1 to 1.0
+  slidingWindowSize: number;
+  dynamicBypass: boolean; // Autonomous mode token bypass
+  modelRoute: 'local_fallback' | 'cloud_orchestrator' | 'mcp_bridged';
+}
+
 export interface Session {
   id: string;
+  uid: string;
   title: string;
   systemPromptId: string; // references custom-prompts
   modelId: string;
@@ -33,6 +42,8 @@ export interface Session {
   maxTokens: number;
   messages: Message[];
   createdAt: string;
+  updatedAt?: any;
+  rtkConfig?: RTKConfiguration;
 }
 
 export type ProviderType = 'local' | 'remote' | 'custom';

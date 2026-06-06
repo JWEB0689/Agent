@@ -331,6 +331,7 @@ def solve_matrix_relation(coefficient_matrix, constant_vector):
 export const INITIAL_SESSIONS: Session[] = [
   {
     id: 's1',
+    uid: 'mock_uid_1',
     title: 'Code Refactoring Session',
     systemPromptId: 'general_assistant',
     modelId: 'llama3.1:8b',
@@ -361,6 +362,7 @@ export const INITIAL_SESSIONS: Session[] = [
   },
   {
     id: 's2',
+    uid: 'mock_uid_1',
     title: 'MCP Core Integrations Debugging',
     systemPromptId: 'mcp_prompter',
     modelId: 'gpt-4o',

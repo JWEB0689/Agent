@@ -56,7 +56,7 @@ export default function Sidebar({
     { id: 'prompts', label: 'Prompt Studio', icon: Sparkles },
     { id: 'plugins', label: 'Plugin Registry', icon: Layers },
     { id: 'sync', label: 'Sync Cluster', icon: Shield }
-  ] as const;
+  ] as Array<{ id: string; label: string; icon: React.ElementType; badge?: number }>;
 
   return (
     <div className="w-64 bg-zinc-950 border-r border-zinc-900 flex flex-col h-full select-none shrink-0 font-sans">

@@ -2,21 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { db, handleFirestoreError } from '../firebase';
 import { useAuth } from '../context/AuthContext';
-
-export interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: number;
-}
-
-export interface Session {
-  id: string;
-  uid: string;
-  title: string;
-  updatedAt: any;
-  messages: Message[];
-}
+import { Session, Message } from '../types';
 
 export function useSessions() {
   const { user } = useAuth();
@@ -61,8 +47,21 @@ export function useSessions() {
       const newSessionInfo = {
         uid: user.uid,
         title,
+        systemPromptId: 'default',
+        modelId: 'llama-3',
+        providerId: 'local',
+        temperature: 0.7,
+        maxTokens: 2048,
+        createdAt: new Date().toISOString(),
         updatedAt: serverTimestamp(),
-        messages: []
+        messages: [],
+        rtkConfig: {
+          enabled: true,
+          compressionRatio: 0.8,
+          slidingWindowSize: 4000,
+          dynamicBypass: true,
+          modelRoute: 'local_fallback'
+        }
       };
       const docRef = await addDoc(collection(db, 'sessions'), newSessionInfo);
       return docRef.id;
@@ -83,6 +82,19 @@ export function useSessions() {
       handleFirestoreError(error);
     }
   };
+
+  const updateSessionConfig = async (sessionId: string, updates: Partial<Session>) => {
+    if (!user) return;
+    try {
+      const sessionRef = doc(db, 'sessions', sessionId);
+      await updateDoc(sessionRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      handleFirestoreError(error);
+    }
+  };
   
   const deleteSession = async (sessionId: string) => {
     if (!user) return;
@@ -94,5 +106,5 @@ export function useSessions() {
     }
   }
 
-  return { sessions, loading, createSession, updateSessionMessages, deleteSession };
+  return { sessions, loading, createSession, updateSessionMessages, updateSessionConfig, deleteSession };
 }

@@ -116,7 +116,7 @@ export default function ExplorerFS({
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      Array.from(e.dataTransfer.files).forEach(fileObj => {
+      Array.from(e.dataTransfer.files as Iterable<File>).forEach((fileObj: File) => {
         processUploadedFile(fileObj);
       });
     }
@@ -124,7 +124,7 @@ export default function ExplorerFS({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      Array.from(e.target.files).forEach(fileObj => {
+      Array.from(e.target.files as Iterable<File>).forEach((fileObj: File) => {
         processUploadedFile(fileObj);
       });
     }
@@ -304,7 +304,7 @@ interface FileRowProps {
   onToggleAttach: (fileName: string) => void;
 }
 
-function FileRow({ file, onEdit, onDelete, isAttached, onToggleAttach }: FileRowProps) {
+const FileRow: React.FC<FileRowProps> = ({ file, onEdit, onDelete, isAttached, onToggleAttach }) => {
   const isCode = file.name.endsWith('.py') || file.name.endsWith('.js') || file.name.endsWith('.tsx') || file.name.endsWith('.json');
 
   return (

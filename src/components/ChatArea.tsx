@@ -17,7 +17,7 @@ interface ChatAreaProps {
   onChangeSessionParam: (field: string, value: any) => void;
   attachedFileNames: string[];
   onToggleAttachment: (fileName: string) => void;
-  isSending: boolean;
+  isSending?: boolean;
 }
 
 export default function ChatArea({
@@ -241,17 +241,18 @@ export default function ChatArea({
 
             <div className="flex flex-col">
               <span className="text-[9px] text-zinc-500 font-mono font-medium tracking-tight uppercase leading-none">MODEL COMPILER</span>
-              <select
-                className="bg-transparent text-zinc-200 font-medium border-none p-0 focus:ring-0 text-[11px] font-mono cursor-pointer"
+              <input
+                list={`models-${session.providerId}`}
+                className="bg-transparent text-zinc-200 font-medium border-none p-0 focus:ring-0 text-[11px] font-mono w-32 placeholder-zinc-500"
                 value={session.modelId}
                 onChange={(e) => onChangeSessionParam('modelId', e.target.value)}
-              >
+                placeholder="Type model name..."
+              />
+              <datalist id={`models-${session.providerId}`}>
                 {(providers.find(p => p.id === session.providerId)?.models || ['llama3']).map(mod => (
-                  <option key={mod} value={mod} className="bg-zinc-950 text-zinc-300 font-mono">
-                    {mod}
-                  </option>
+                  <option key={mod} value={mod} />
                 ))}
-              </select>
+              </datalist>
             </div>
             
             <div className="h-6 w-[1px] bg-zinc-800" />

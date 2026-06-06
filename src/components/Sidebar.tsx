@@ -212,14 +212,41 @@ export default function Sidebar({
       </div>
 
       {/* 3. Footer profile and metadata */}
-      <div className="p-3 border-t border-zinc-900 shrink-0 bg-zinc-950/40 text-[10px] font-mono flex items-center justify-between">
-        <div className="flex items-center space-x-2 truncate">
-          <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white scale-90 select-none">
+      <div className="p-3 border-t border-zinc-900 shrink-0 bg-zinc-950/40 text-[10px] font-mono flex flex-col gap-3">
+        {/* Resource Monitor */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[8px] text-zinc-500 uppercase tracking-widest">CPU</span>
+            <span className="text-[8px] text-cyan-400">12%</span>
+          </div>
+          <div className="w-full h-1 bg-zinc-900 rounded-full overflow-hidden">
+            <div className="h-full bg-cyan-500 w-[12%]" />
+          </div>
+
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-[8px] text-zinc-500 uppercase tracking-widest">RAM</span>
+            <span className="text-[8px] text-emerald-400">4.2 / 16 GB</span>
+          </div>
+          <div className="w-full h-1 bg-zinc-900 rounded-full overflow-hidden">
+            <div className="h-full bg-emerald-500 w-[26%]" />
+          </div>
+
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-[8px] text-zinc-500 uppercase tracking-widest">VRAM</span>
+            <span className="text-[8px] text-purple-400">1.1 / 8 GB</span>
+          </div>
+          <div className="w-full h-1 bg-zinc-900 rounded-full overflow-hidden">
+            <div className="h-full bg-purple-500 w-[14%]" />
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 truncate border-t border-zinc-900 pt-3">
+          <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white scale-90 select-none shrink-0">
             OP
           </div>
           <div className="flex flex-col truncate">
             <span className="text-zinc-400 truncate leading-none">System Operator</span>
-            <span className="text-[8.5px] text-zinc-600 leading-none mt-1">jweb0689@gmail.com</span>
+            <span className="text-[8.5px] text-zinc-600 leading-none mt-1">Local</span>
           </div>
         </div>
       </div>

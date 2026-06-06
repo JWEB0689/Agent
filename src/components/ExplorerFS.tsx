@@ -96,20 +96,36 @@ export default function ExplorerFS({
 
   const processUploadedFile = (fileObj: File) => {
     const reader = new FileReader();
+
+    const isTextFile = fileObj.type.startsWith('text/') || 
+                       fileObj.name.endsWith('.js') || 
+                       fileObj.name.endsWith('.ts') || 
+                       fileObj.name.endsWith('.tsx') || 
+                       fileObj.name.endsWith('.json') ||
+                       fileObj.name.endsWith('.py') ||
+                       fileObj.name.endsWith('.md') ||
+                       fileObj.name.endsWith('.csv') ||
+                       fileObj.name.endsWith('.txt');
+
     reader.onload = (event) => {
       const content = event.target?.result as string || '';
       const newF: VirtualFile = {
-        id: 'upload_' + Date.now(),
+        id: 'upload_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
         name: fileObj.name,
         path: `/${fileObj.name}`,
         content: content,
         size: fileObj.size,
-        type: fileObj.type || 'text/plain',
+        type: fileObj.type || (isTextFile ? 'text/plain' : 'application/octet-stream'),
         isDir: false
       };
       onAddFile(newF);
     };
-    reader.readAsText(fileObj);
+
+    if (isTextFile) {
+      reader.readAsText(fileObj);
+    } else {
+      reader.readAsDataURL(fileObj);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {

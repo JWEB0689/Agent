@@ -1,0 +1,16 @@
+{
+  "name": "Agent Studio MCP Engine",
+  "short_name": "Agent Studio",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "description": "Multi-platform AI Plugin and Model Manager",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

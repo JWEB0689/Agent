@@ -44,7 +44,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async () => {
-    await signIn();
+    try {
+      await signIn();
+    } catch (error: any) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        console.error('Login failed:', error);
+      }
+    }
   };
 
   const logout = async () => {

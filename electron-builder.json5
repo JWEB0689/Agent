@@ -1,0 +1,22 @@
+{
+  "appId": "com.agentai.windows",
+  "productName": "Agent AI",
+  "directories": {
+    "output": "release/${version}"
+  },
+  "files": [
+    "dist",
+    "dist-electron"
+  ],
+  "win": {
+    "target": [
+      "nsis"
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
+  }
+}

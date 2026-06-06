@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
-import { auth, signIn, signOut } from '../firebase';
+import { auth, signInWithGoogle, signInWithGithub, signOut } from '../firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError } from '../firebase';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithGithub: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -43,9 +44,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const login = async () => {
+  const loginWithGoogle = async () => {
     try {
-      await signIn();
+      await signInWithGoogle();
+    } catch (error: any) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        console.error('Login failed:', error);
+      }
+    }
+  };
+
+  const loginWithGithub = async () => {
+    try {
+      await signInWithGithub();
     } catch (error: any) {
       if (error.code !== 'auth/popup-closed-by-user') {
         console.error('Login failed:', error);
@@ -58,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithGithub, logout }}>
       {children}
     </AuthContext.Provider>
   );

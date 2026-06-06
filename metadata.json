@@ -1,0 +1,6 @@
+{
+  "name": "Agent",
+  "description": "An AI frontend GUI for local or remote backend LLMs with plugin support, session management, and custom prompts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

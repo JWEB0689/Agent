@@ -1,0 +1,93 @@
+{
+  "rules": [],
+  "blueprints": [
+    {
+      "collectionName": "users",
+      "rules": [
+        {
+          "ruleType": "document",
+          "documentId": "{userId}",
+          "allow": ["read", "write"],
+          "condition": "request.auth != null && request.auth.uid == userId"
+        }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "timestamp"
+          },
+          "theme": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "collectionName": "sessions",
+      "rules": [
+        {
+          "ruleType": "collection",
+          "allow": ["read", "create"],
+          "condition": "request.auth != null"
+        },
+        {
+          "ruleType": "document",
+          "documentId": "{sessionId}",
+          "allow": ["update", "delete"],
+          "condition": "request.auth != null && resource.data.uid == request.auth.uid"
+        }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "timestamp"
+          },
+          "messages": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    {
+      "collectionName": "prompts",
+      "rules": [
+        {
+          "ruleType": "collection",
+          "allow": ["read", "create"],
+          "condition": "request.auth != null"
+        },
+        {
+          "ruleType": "document",
+          "documentId": "{promptId}",
+          "allow": ["update", "delete"],
+          "condition": "request.auth != null && resource.data.uid == request.auth.uid"
+        }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -64,20 +64,73 @@ export default function MainScreen() {
     const updatedMessages = [...(activeSession.messages || []), newMessage];
     await updateSessionMessages(activeSessionId, updatedMessages);
     
-    setTimeout(async () => {
+    try {
       let rtkNote = '';
+      let bypassNote = rtkBypassStr;
+
       if (isRtkEnabled && activeSession.rtkConfig) {
-        rtkNote = ` Note: Context optimized efficiently in accordance with RTK guidelines (${Math.round(activeSession.rtkConfig.compressionRatio * 100)}% comp, ${activeSession.rtkConfig.slidingWindowSize} window).`;
+        try {
+          const response = await fetch('http://localhost:4000/api/compress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: updatedMessages, rtkConfig: activeSession.rtkConfig })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            rtkNote = `\n\n[RTK Engine]: Compressed payload from ${data.stats?.originalLength || 0} down to ${data.stats?.compressedLength || 0} messages before dispatch.`;
+          } else {
+            rtkNote = `\n\n[RTK Engine]: Failed to compress (API Error).`;
+          }
+        } catch (err) {
+           rtkNote = `\n\n[RTK Engine]: Unreachable. Is the standalone RTK server running on port 4000? Proceeding with uncompressed context.`;
+        }
+      }
+
+      // --- NEW GEMINI API INTEGRATION ---
+      let llmResponseText = '';
+      try {
+        const apiKey = import.meta.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+          throw new Error('GEMINI_API_KEY is not set in your .env.local file');
+        }
+        
+        // Dynamic import
+        const { GoogleGenAI } = await import('@google/genai');
+        const ai = new GoogleGenAI({ apiKey });
+        
+        // Map messages to Gemini format
+        const history = finalMessages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        }));
+        
+        // We pop the last user message to send as the prompt, keeping the rest as history
+        const latestMessage = history.pop();
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [...history, latestMessage]
+        });
+        
+        llmResponseText = response.text || 'No response generated.';
+      } catch (err: any) {
+        console.error('LLM Error:', err);
+        llmResponseText = `⚠️ **LLM Execution Failed**: ${err.message}`;
       }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `⚡ ${rtkBypassStr}Autonomous processing complete.${rtkNote}\n\nReceived: "${newMessage.content}"`,
+        content: `${bypassNote}${llmResponseText}${rtkNote}`,
         timestamp: (Date.now() + 1).toString()
       };
+      
       await updateSessionMessages(activeSessionId, [...updatedMessages, assistantMessage]);
-    }, 1200);
+      
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

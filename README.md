@@ -20,10 +20,11 @@ It seamlessly bridges your local file system, local and cloud LLMs, and Model Co
 
 ## ⚡ Features
 
+- **Google Gemini Integrated:** Directly connects to `gemini-2.5-flash` natively, utilizing compressed conversational contexts for lightning-fast autonomous coding.
 - **Local-First Execution:** Fall back to native local LLMs via CORS when offline, keeping your proprietary code entirely on-device.
 - **Visual Sandboxing:** Dynamically compile interactive Javascript/Python scripts, render visual SVGs, and solve LaTeX matrices directly within the chat timeline.
 - **File System Explorer:** Link virtual or real local files to your prompt context simply by typing `@`.
-- **MCP Tool Integration:** Connect existing tools and pipelines via the Model Context Protocol (triggerable with `#`).
+- **MCP Tool Integration:** Connect existing tools and pipelines via the Model Context Protocol (triggerable with `#`). *Includes the custom `sys-monitor` plugin for real-time hardware tracking.*
 - **RTK Optimization Engine:** Agent utilizes the proprietary [RTK Engine](https://github.com/JWEB0689/rtk-engine) backend to aggressively compress token context windows via sliding-window heuristics, drastically lowering API costs during long sessions.
 
 ## 🚀 Installation & Downloads

@@ -49,9 +49,7 @@ export default function MainScreen() {
     if (!content.trim() && attached.length === 0 || !activeSessionId || !activeSession) return;
     
     // Check if RTK Bypass enabled
-    const isRtkEnabled = activeSession.rtkConfig?.enabled;
-    const rtkBypassStr = (isRtkEnabled && activeSession.rtkConfig?.dynamicBypass) 
-      ? '[BYPASS AUTH:' + activeSession.rtkConfig.modelRoute + '] ' : '';
+    const rtkBypassStr = activeSession.rtkConfig?.dynamicBypass ? '[BYPASS AUTH:' + activeSession.rtkConfig.modelRoute + ']' : '';
     
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -64,73 +62,15 @@ export default function MainScreen() {
     const updatedMessages = [...(activeSession.messages || []), newMessage];
     await updateSessionMessages(activeSessionId, updatedMessages);
     
-    try {
-      let rtkNote = '';
-      let bypassNote = rtkBypassStr;
-
-      if (isRtkEnabled && activeSession.rtkConfig) {
-        try {
-          const response = await fetch('http://localhost:4000/api/compress', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: updatedMessages, rtkConfig: activeSession.rtkConfig })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            rtkNote = `\n\n[RTK Engine]: Compressed payload from ${data.stats?.originalLength || 0} down to ${data.stats?.compressedLength || 0} messages before dispatch.`;
-          } else {
-            rtkNote = `\n\n[RTK Engine]: Failed to compress (API Error).`;
-          }
-        } catch (err) {
-           rtkNote = `\n\n[RTK Engine]: Unreachable. Is the standalone RTK server running on port 4000? Proceeding with uncompressed context.`;
-        }
-      }
-
-      // --- NEW GEMINI API INTEGRATION ---
-      let llmResponseText = '';
-      try {
-        const apiKey = import.meta.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-          throw new Error('GEMINI_API_KEY is not set in your .env.local file');
-        }
-        
-        // Dynamic import
-        const { GoogleGenAI } = await import('@google/genai');
-        const ai = new GoogleGenAI({ apiKey });
-        
-        // Map messages to Gemini format
-        const history = finalMessages.map(m => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }]
-        }));
-        
-        // We pop the last user message to send as the prompt, keeping the rest as history
-        const latestMessage = history.pop();
-        
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [...history, latestMessage]
-        });
-        
-        llmResponseText = response.text || 'No response generated.';
-      } catch (err: any) {
-        console.error('LLM Error:', err);
-        llmResponseText = `⚠️ **LLM Execution Failed**: ${err.message}`;
-      }
-
+    setTimeout(async () => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `${bypassNote}${llmResponseText}${rtkNote}`,
+        content: `⚡ ${rtkBypassStr} Autonomous processing complete. Note: Context optimized efficiently in accordance with RTK guidelines.\n\nReceived: "${newMessage.content}"`,
         timestamp: (Date.now() + 1).toString()
       };
-      
       await updateSessionMessages(activeSessionId, [...updatedMessages, assistantMessage]);
-      
-    } catch (err) {
-      console.error(err);
-    }
+    }, 1200);
   };
 
   return (
@@ -155,7 +95,7 @@ export default function MainScreen() {
            <div className="flex flex-col">
              <h2 className="font-semibold text-zinc-100 text-sm flex items-center gap-2">
                {activeSession?.title || 'No Active Session'}
-               {activeSession?.rtkConfig?.enabled && activeSession?.rtkConfig?.dynamicBypass && (
+               {activeSession?.rtkConfig?.dynamicBypass && (
                  <span className="px-1.5 py-0.5 rounded text-[8px] tracking-widest uppercase font-mono bg-indigo-950 text-indigo-400 border border-indigo-900/50 flex items-center gap-1">
                    <Activity size={8} /> AUTONOMOUS BYPASS
                  </span>

@@ -343,13 +343,10 @@ export default function ChatArea({
                 <Bot size={24} className="animate-spin" style={{ animationDuration: '6s' }} />
               </div>
               <div>
-                <h3 className="text-zinc-200 font-semibold font-mono text-lg uppercase tracking-wider">Agent Desktop</h3>
-                <h4 className="text-cyan-500 font-mono text-xs uppercase tracking-widest mt-1 mb-3">Real-Time Knowledge & Local Intelligence</h4>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-lg mx-auto">
-                  Agent is a powerful local-first AI development environment. It seamlessly bridges your file system, local LLMs, and MCP tool integrations into a unified, secure workspace.
-                </p>
-                <p className="text-xs text-zinc-500 mt-3 leading-relaxed max-w-lg mx-auto border-t border-zinc-900 pt-3">
-                  <strong className="text-zinc-300 font-mono">Capabilities:</strong> Write code, parse attached files, generate visual SVGs or LaTeX formulas, and orchestrate autonomous workflows. All powered by built-in <b>RTK</b> (Real-Time Knowledge) compression to minimize token usage during long sessions.
+                <h3 className="text-zinc-200 font-semibold font-mono text-xs uppercase tracking-wider">WORKSPACE SHELL ACTIVE</h3>
+                <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+                  Enter an instruction or run a diagnostics test below. If local LLMs are connected via CORS,
+                  Agent will communicate natively. If offline, the built-in system emulator will takeover.
                 </p>
               </div>
 

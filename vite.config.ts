@@ -2,23 +2,10 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
-import electron from 'vite-plugin-electron/simple';
 
 export default defineConfig(() => {
   return {
-    plugins: [
-      react(), 
-      tailwindcss(),
-      electron({
-        main: {
-          entry: 'electron/main.ts',
-        },
-        preload: {
-          input: 'electron/preload.ts',
-        },
-        renderer: {},
-      })
-    ],
+    plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

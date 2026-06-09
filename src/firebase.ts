@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
+import { getAuth, signInAnonymously, signOut as firebaseSignOut } from 'firebase/auth';
 import { getFirestore, enableMultiTabIndexedDbPersistence, collection, doc, setDoc, getDoc, updateDoc, deleteDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
 
 // Error handling interface from SKILL.md
@@ -60,29 +60,12 @@ enableMultiTabIndexedDbPersistence(db).catch((err) => {
   }
 });
 
-const googleProvider = new GoogleAuthProvider();
-const githubProvider = new GithubAuthProvider();
-
-export const signInWithGoogle = async () => {
+export const signIn = async () => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
+    const result = await signInAnonymously(auth);
     return result.user;
   } catch (error) {
-    if ((error as any).code !== 'auth/popup-closed-by-user') {
-      console.error('Sign-in error:', error);
-    }
-    throw error;
-  }
-};
-
-export const signInWithGithub = async () => {
-  try {
-    const result = await signInWithPopup(auth, githubProvider);
-    return result.user;
-  } catch (error) {
-    if ((error as any).code !== 'auth/popup-closed-by-user') {
-      console.error('Sign-in error:', error);
-    }
+    console.error('Sign-in error:', error);
     throw error;
   }
 };

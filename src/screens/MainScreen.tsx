@@ -49,7 +49,9 @@ export default function MainScreen() {
     if (!content.trim() && attached.length === 0 || !activeSessionId || !activeSession) return;
     
     // Check if RTK Bypass enabled
-    const rtkBypassStr = activeSession.rtkConfig?.dynamicBypass ? '[BYPASS AUTH:' + activeSession.rtkConfig.modelRoute + ']' : '';
+    const isRtkEnabled = activeSession.rtkConfig?.enabled;
+    const rtkBypassStr = (isRtkEnabled && activeSession.rtkConfig?.dynamicBypass) 
+      ? '[BYPASS AUTH:' + activeSession.rtkConfig.modelRoute + '] ' : '';
     
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -63,10 +65,15 @@ export default function MainScreen() {
     await updateSessionMessages(activeSessionId, updatedMessages);
     
     setTimeout(async () => {
+      let rtkNote = '';
+      if (isRtkEnabled && activeSession.rtkConfig) {
+        rtkNote = ` Note: Context optimized efficiently in accordance with RTK guidelines (${Math.round(activeSession.rtkConfig.compressionRatio * 100)}% comp, ${activeSession.rtkConfig.slidingWindowSize} window).`;
+      }
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `⚡ ${rtkBypassStr} Autonomous processing complete. Note: Context optimized efficiently in accordance with RTK guidelines.\n\nReceived: "${newMessage.content}"`,
+        content: `⚡ ${rtkBypassStr}Autonomous processing complete.${rtkNote}\n\nReceived: "${newMessage.content}"`,
         timestamp: (Date.now() + 1).toString()
       };
       await updateSessionMessages(activeSessionId, [...updatedMessages, assistantMessage]);
@@ -95,7 +102,7 @@ export default function MainScreen() {
            <div className="flex flex-col">
              <h2 className="font-semibold text-zinc-100 text-sm flex items-center gap-2">
                {activeSession?.title || 'No Active Session'}
-               {activeSession?.rtkConfig?.dynamicBypass && (
+               {activeSession?.rtkConfig?.enabled && activeSession?.rtkConfig?.dynamicBypass && (
                  <span className="px-1.5 py-0.5 rounded text-[8px] tracking-widest uppercase font-mono bg-indigo-950 text-indigo-400 border border-indigo-900/50 flex items-center gap-1">
                    <Activity size={8} /> AUTONOMOUS BYPASS
                  </span>

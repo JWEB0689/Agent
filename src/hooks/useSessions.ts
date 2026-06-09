@@ -9,7 +9,18 @@ export function useSessions() {
     try {
       const stored = localStorage.getItem('agent_sessions');
       if (stored) {
-        setSessions(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        const migrated = parsed.map((s: Session) => ({
+          ...s,
+          rtkConfig: s.rtkConfig || {
+            enabled: false,
+            compressionRatio: 0.8,
+            slidingWindowSize: 4000,
+            dynamicBypass: false,
+            modelRoute: 'local_fallback'
+          }
+        }));
+        setSessions(migrated);
       }
     } catch (e) {
       console.error('Failed to load sessions', e);

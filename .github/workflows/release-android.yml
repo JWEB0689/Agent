@@ -7,19 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: 'Version tag (e.g. v0.1.0) — used for artifact naming'
+        description: 'Version tag for artifact naming (e.g. v0.1.0)'
         required: false
-        default: 'v0.1.0-manual'
+        default: 'v0.1.0-test'
 
 permissions:
   contents: write
 
 jobs:
   build-android:
-    name: Android APK + AAB
+    name: Android Debug APK
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     env:
       RELEASE_TAG: ${{ github.event.inputs.version_tag || github.ref_name }}
 
@@ -51,44 +49,42 @@ jobs:
       - name: Build Vite web app
         run: npm run build
 
-      - name: Sync Capacitor to Android
+      - name: Sync web assets into Android project
         run: npx cap sync android
 
       - name: Make Gradle wrapper executable
         run: chmod +x android/gradlew
 
-      # Build a debug APK (no keystore needed — suitable for testing)
+      # Debug APK — signed with Android's auto-generated debug keystore.
+      # No setup needed. Can be installed on any Android device with
+      # "Install from unknown sources" enabled in Settings.
       - name: Build debug APK
-        run: |
-          cd android
-          ./gradlew assembleDebug --no-daemon
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
         env:
-          GRADLE_OPTS: '-Dorg.gradle.jvmargs=-Xmx4g'
+          GRADLE_OPTS: '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m'
 
-      # Build release AAB (unsigned — ready for signing + Play Store upload)
-      - name: Build release AAB (unsigned)
+      - name: Rename APK
         run: |
-          cd android
-          ./gradlew bundleRelease --no-daemon
-        env:
-          GRADLE_OPTS: '-Dorg.gradle.jvmargs=-Xmx4g'
-
-      - name: Rename artifacts
-        run: |
-          VERSION="${{ env.RELEASE_TAG }}"
           cp android/app/build/outputs/apk/debug/app-debug.apk \
-             "agent-studio-${VERSION}-android-debug.apk"
-          cp android/app/build/outputs/bundle/release/app-release.aab \
-             "agent-studio-${VERSION}-android-release-unsigned.aab"
+             "agent-studio-${{ env.RELEASE_TAG }}-android.apk"
 
-      - name: Upload APK to GitHub Release
+      # Upload as a standalone build artifact — downloadable directly from
+      # the Actions run page without needing a GitHub release.
+      - name: Upload APK as Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: agent-studio-${{ env.RELEASE_TAG }}-android.apk
+          retention-days: 30
+
+      # Also attach to the GitHub release if one exists for this tag
+      - name: Attach APK to GitHub Release
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           draft: true
           tag_name: ${{ env.RELEASE_TAG }}
-          files: |
-            agent-studio-${{ env.RELEASE_TAG }}-android-debug.apk
-            agent-studio-${{ env.RELEASE_TAG }}-android-release-unsigned.aab
-          body: ''
+          files: agent-studio-${{ env.RELEASE_TAG }}-android.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

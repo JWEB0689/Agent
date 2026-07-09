@@ -1,0 +1,5 @@
+ci: produce real-device test builds (Android debug APK + iOS unsigned IPA)
+
+Android: debug APK auto-signed with debug keystore, upload as Actions artifact
+iOS: build for iphoneos (real device), package as unsigned IPA, upload as Actions artifact
+Both downloadable directly from the workflow run page without needing a release

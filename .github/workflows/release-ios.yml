@@ -7,19 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: 'Version tag (e.g. v0.1.0) — used for artifact naming'
+        description: 'Version tag for artifact naming (e.g. v0.1.0)'
         required: false
-        default: 'v0.1.0-manual'
+        default: 'v0.1.0-test'
 
 permissions:
   contents: write
 
 jobs:
   build-ios:
-    name: iOS IPA (unsigned)
+    name: iOS Unsigned IPA (real device)
     runs-on: macos-15
-    permissions:
-      contents: write
     env:
       RELEASE_TAG: ${{ github.event.inputs.version_tag || github.ref_name }}
 
@@ -33,11 +31,8 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - name: Select Xcode version
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
-      - name: Install CocoaPods
-        run: sudo gem install cocoapods --no-document
+      - name: Select Xcode 16
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
 
       - name: Install npm dependencies
         run: npm ci
@@ -45,83 +40,86 @@ jobs:
       - name: Build Vite web app
         run: npm run build
 
-      - name: Sync Capacitor to iOS
+      - name: Sync web assets into iOS project
         run: npx cap sync ios
 
-      - name: Install CocoaPods dependencies
-        working-directory: ios/App
-        run: pod install
+      # Capacitor v8 uses Swift Package Manager — no CocoaPods needed.
+      # Resolve SPM packages before building.
+      - name: Resolve Swift Package dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -clonedSourcePackagesDirPath ios/SourcePackages
 
-      - name: Build iOS app (simulator — no signing required)
+      # Build for iphoneos (real device) with code signing disabled.
+      # This produces an .app bundle that we'll manually package into an IPA.
+      # The IPA can be installed on a device using Sideloadly or AltStore
+      # (both re-sign with your Apple ID for free — no developer account needed).
+      - name: Build iOS app (unsigned, real device)
         run: |
           xcodebuild \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
-            -configuration Release \
-            -sdk iphonesimulator \
+            -configuration Debug \
+            -sdk iphoneos \
             -derivedDataPath ios/DerivedData \
+            -clonedSourcePackagesDirPath ios/SourcePackages \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            clean build
+            PRODUCT_BUNDLE_IDENTIFIER=com.agentstudio.mcpengine \
+            build \
+            | xcpretty || true
 
-      - name: Package simulator build as zip
+      # Package the .app into a standard IPA directory structure.
+      # IPA = ZIP of a Payload/ folder containing the .app bundle.
+      - name: Package .app into unsigned IPA
         run: |
           VERSION="${{ env.RELEASE_TAG }}"
-          APP_PATH=$(find ios/DerivedData -name "App.app" -type d | head -1)
-          zip -r "agent-studio-${VERSION}-ios-simulator.zip" "$APP_PATH"
+          APP_PATH=$(find ios/DerivedData/Build/Products/Debug-iphoneos -name "App.app" -maxdepth 2 | head -1)
+          echo "Found app at: $APP_PATH"
+          mkdir -p ios/Payload
+          cp -r "$APP_PATH" ios/Payload/App.app
+          cd ios
+          zip -r "../agent-studio-${VERSION}-ios-unsigned.ipa" Payload
+          cd ..
+          rm -rf ios/Payload
 
-      - name: Upload iOS build to GitHub Release
+      # Upload as standalone Actions artifact — downloadable directly from
+      # the Actions run page. No release or tag needed.
+      - name: Upload IPA as Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-ipa
+          path: agent-studio-${{ env.RELEASE_TAG }}-ios-unsigned.ipa
+          retention-days: 30
+
+      # Also attach to GitHub Release if triggered by a tag push
+      - name: Attach IPA to GitHub Release
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           draft: true
           tag_name: ${{ env.RELEASE_TAG }}
-          files: agent-studio-${{ env.RELEASE_TAG }}-ios-simulator.zip
-          body: ''
+          files: agent-studio-${{ env.RELEASE_TAG }}-ios-unsigned.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 # ─────────────────────────────────────────────────────────────────────────────
-# NOTE: Signed device builds (.ipa for real iPhone / App Store) require:
-#   1. An Apple Developer account ($99/yr)
-#   2. A Distribution Certificate + Provisioning Profile stored as GitHub secrets:
-#      - IOS_CERTIFICATE_BASE64  (p12 exported from Keychain, base64 encoded)
-#      - IOS_CERTIFICATE_PASSWORD
-#      - IOS_PROVISION_PROFILE_BASE64
-#
-# Once you have those, uncomment the block below and remove the simulator build.
+# HOW TO INSTALL THE UNSIGNED IPA ON YOUR IPHONE
 # ─────────────────────────────────────────────────────────────────────────────
+# Option A — Sideloadly (Windows or Mac):
+#   1. Download Sideloadly from https://sideloadly.io
+#   2. Connect your iPhone via USB
+#   3. Drag the .ipa into Sideloadly, sign in with your Apple ID (free)
+#   4. Hit Start — it signs and installs in ~30 seconds
+#   5. Go to Settings > General > VPN & Device Management and trust your cert
 #
-#     - name: Import code-signing certificate
-#       uses: apple-actions/import-codesign-certs@v3
-#       with:
-#         p12-file-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
-#         p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+# Option B — AltStore (Windows or Mac):
+#   1. Install AltStore from https://altstore.io
+#   2. Install AltStore on your iPhone via AltServer on your PC/Mac
+#   3. Open AltStore on your iPhone > My Apps > + > pick the .ipa
 #
-#     - name: Import provisioning profile
-#       run: |
-#         mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-#         echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 --decode \
-#           > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
-#
-#     - name: Archive iOS app
-#       run: |
-#         xcodebuild archive \
-#           -workspace ios/App/App.xcworkspace \
-#           -scheme App \
-#           -configuration Release \
-#           -archivePath ios/App.xcarchive \
-#           -sdk iphoneos
-#
-#     - name: Export IPA
-#       run: |
-#         xcodebuild -exportArchive \
-#           -archivePath ios/App.xcarchive \
-#           -exportPath ios/export \
-#           -exportOptionsPlist ios/ExportOptions.plist
-#
-#     - name: Upload signed IPA
-#       uses: softprops/action-gh-release@v2
-#       with:
-#         draft: true
-#         files: ios/export/App.ipa
+# Note: Free Apple ID sideloading expires every 7 days and needs re-signing.
+# ─────────────────────────────────────────────────────────────────────────────

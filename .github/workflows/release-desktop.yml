@@ -4,11 +4,20 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag (e.g. v0.1.0) — used for artifact naming'
+        required: false
+        default: 'v0.1.0-manual'
 
 jobs:
   build-tauri:
     permissions:
       contents: write
+    env:
+      # Use manual input tag if triggered via workflow_dispatch, else use the pushed tag
+      RELEASE_TAG: ${{ github.event.inputs.version_tag || github.ref_name }}
     strategy:
       fail-fast: false
       matrix:
@@ -63,10 +72,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Agent Studio ${{ github.ref_name }}'
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: 'Agent Studio ${{ env.RELEASE_TAG }}'
           releaseBody: |
-            ## Agent Studio MCP Engine ${{ github.ref_name }}
+            ## Agent Studio MCP Engine ${{ env.RELEASE_TAG }}
 
             ### Downloads
             | Platform | File |

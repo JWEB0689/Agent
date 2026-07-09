@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag (e.g. v0.1.0) — used for artifact naming'
+        required: false
+        default: 'v0.1.0-manual'
 
 jobs:
   build-android:
@@ -11,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.version_tag || github.ref_name }}
 
     steps:
       - name: Checkout repository
@@ -64,7 +72,7 @@ jobs:
 
       - name: Rename artifacts
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ env.RELEASE_TAG }}"
           cp android/app/build/outputs/apk/debug/app-debug.apk \
              "agent-studio-${VERSION}-android-debug.apk"
           cp android/app/build/outputs/bundle/release/app-release.aab \
@@ -74,9 +82,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
+          tag_name: ${{ env.RELEASE_TAG }}
           files: |
-            agent-studio-${{ github.ref_name }}-android-debug.apk
-            agent-studio-${{ github.ref_name }}-android-release-unsigned.aab
+            agent-studio-${{ env.RELEASE_TAG }}-android-debug.apk
+            agent-studio-${{ env.RELEASE_TAG }}-android-release-unsigned.aab
           body: ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

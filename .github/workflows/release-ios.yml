@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag (e.g. v0.1.0) — used for artifact naming'
+        required: false
+        default: 'v0.1.0-manual'
 
 jobs:
   build-ios:
@@ -11,6 +17,8 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+    env:
+      RELEASE_TAG: ${{ github.event.inputs.version_tag || github.ref_name }}
 
     steps:
       - name: Checkout repository
@@ -56,7 +64,7 @@ jobs:
 
       - name: Package simulator build as zip
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ env.RELEASE_TAG }}"
           APP_PATH=$(find ios/DerivedData -name "App.app" -type d | head -1)
           zip -r "agent-studio-${VERSION}-ios-simulator.zip" "$APP_PATH"
 
@@ -64,7 +72,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: agent-studio-${{ github.ref_name }}-ios-simulator.zip
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: agent-studio-${{ env.RELEASE_TAG }}-ios-simulator.zip
           body: ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,4 +1,4 @@
-name: Release — Desktop (Windows + macOS)
+name: Release — Desktop (Windows .exe + macOS .dmg)
 
 on:
   push:
@@ -7,40 +7,41 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: 'Version tag (e.g. v0.1.0) — used for artifact naming'
+        description: 'Version tag for artifact naming (e.g. v0.1.0)'
         required: false
-        default: 'v0.1.0-manual'
+        default: 'v0.1.0-test'
 
-# Grant write access at the workflow level so workflow_dispatch runs can
-# create/update GitHub releases (job-level permissions alone are not enough)
+# Workflow-level write permission required for release creation via workflow_dispatch
 permissions:
   contents: write
 
 jobs:
   build-tauri:
     env:
-      # Use manual input tag if triggered via workflow_dispatch, else use the pushed tag
       RELEASE_TAG: ${{ github.event.inputs.version_tag || github.ref_name }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Windows x64
+          # Windows x64 → produces Agent Studio_0.1.0_x64-setup.exe
           - platform: windows-latest
-            args: '--target x86_64-pc-windows-msvc'
+            args: '--target x86_64-pc-windows-msvc --bundles nsis'
             arch: x64
-          # Windows ARM64 (cross-compiled on x64 runner)
+            artifact_name: windows-x64-exe
+          # Windows ARM64 → produces Agent Studio_0.1.0_arm64-setup.exe
           - platform: windows-latest
-            args: '--target aarch64-pc-windows-msvc'
+            args: '--target aarch64-pc-windows-msvc --bundles nsis'
             arch: arm64
-          # macOS Universal (Intel + Apple Silicon fat binary)
-          # Pinned to macos-15 — macos-latest migrates to macOS 26 from June 2026
+            artifact_name: windows-arm64-exe
+          # macOS Universal → produces Agent Studio_0.1.0_universal.dmg
+          # Pinned to macos-15 (macos-latest migrates to macOS 26 from June 2026)
           - platform: macos-15
-            args: '--target universal-apple-darwin'
+            args: '--target universal-apple-darwin --bundles dmg'
             arch: universal
+            artifact_name: macos-universal-dmg
 
     runs-on: ${{ matrix.platform }}
-    name: Desktop — ${{ matrix.platform }} ${{ matrix.arch }}
+    name: ${{ matrix.artifact_name }}
 
     steps:
       - name: Checkout repository
@@ -55,8 +56,6 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # macOS needs both targets for universal binary
-          # Windows ARM64 needs the aarch64 target added
           targets: ${{ matrix.platform == 'macos-15' && 'aarch64-apple-darwin,x86_64-apple-darwin' || matrix.arch == 'arm64' && 'aarch64-pc-windows-msvc' || '' }}
 
       - name: Cache Rust build artifacts
@@ -70,8 +69,10 @@ jobs:
       - name: Build Vite web app
         run: npm run build
 
-      # Use the official Tauri action to compile & bundle
-      - name: Build Tauri app
+      # Tauri action compiles Rust, bundles the app, and uploads to the release.
+      # Windows → NSIS installer (.exe)
+      # macOS  → Disk image (.dmg)
+      - name: Build and bundle app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,22 +82,39 @@ jobs:
           releaseBody: |
             ## Agent Studio MCP Engine ${{ env.RELEASE_TAG }}
 
-            ### Downloads
-            | Platform | File |
+            | Platform | Download |
             |---|---|
-            | Windows x64 | `.msi` / `.exe` (NSIS) |
-            | Windows ARM64 | `.msi` / `.exe` (NSIS) |
-            | macOS Universal | `.dmg` (Intel + Apple Silicon) |
-            | Android | See Android release |
-            | iOS | See iOS release |
+            | Windows x64 | `Agent Studio_*_x64-setup.exe` |
+            | Windows ARM64 | `Agent Studio_*_arm64-setup.exe` |
+            | macOS Universal | `Agent Studio_*_universal.dmg` |
+            | Android | `agent-studio-*-android.apk` |
+            | iOS | `agent-studio-*-ios-unsigned.ipa` (install via Sideloadly) |
 
-            ### Installing
-            - **Windows**: Run the `.msi` installer or `.exe` setup
-            - **macOS**: Open the `.dmg` and drag to Applications
-
-            > First launch on macOS: right-click → Open if Gatekeeper warns (unsigned build)
+            ### Install
+            - **Windows**: Run the `.exe` installer
+            - **macOS**: Open `.dmg`, drag to Applications
+            - **Android**: Enable "Install unknown apps", open `.apk`
+            - **iOS**: Use [Sideloadly](https://sideloadly.io) (free) with your Apple ID
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
           projectPath: '.'
           tauriScript: 'npx tauri'
+
+      # Also save as a standalone Actions artifact so you can download
+      # the .exe / .dmg directly from the workflow run page
+      - name: Upload Windows .exe artifact
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: src-tauri/target/${{ matrix.arch == 'arm64' && 'aarch64-pc-windows-msvc' || 'x86_64-pc-windows-msvc' }}/release/bundle/nsis/*.exe
+          retention-days: 30
+
+      - name: Upload macOS .dmg artifact
+        if: matrix.platform == 'macos-15'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          retention-days: 30

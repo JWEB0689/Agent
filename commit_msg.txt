@@ -1,5 +1,8 @@
-ci: produce real-device test builds (Android debug APK + iOS unsigned IPA)
+ci: guarantee .exe (Windows) and .dmg (macOS) and .apk and .ipa outputs
 
-Android: debug APK auto-signed with debug keystore, upload as Actions artifact
-iOS: build for iphoneos (real device), package as unsigned IPA, upload as Actions artifact
-Both downloadable directly from the workflow run page without needing a release
+- tauri.conf.json: lock bundle targets to [nsis, dmg] instead of all
+- release-desktop.yml: add --bundles nsis/dmg per platform, upload as Actions artifacts
+- Windows x64/ARM64 -> NSIS .exe installer
+- macOS Universal -> .dmg disk image
+- Android -> debug .apk (existing, unchanged)
+- iOS -> unsigned .ipa (existing, unchanged)

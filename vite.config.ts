@@ -5,6 +5,9 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // base: './' is required for Tauri (file://) and Capacitor (native WebView)
+    // so bundled asset paths are relative rather than absolute
+    base: './',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

@@ -1,0 +1,9 @@
+feat: add cross-platform packaging (Tauri v2 + Capacitor v8)
+
+- Add Tauri v2 scaffold for Windows x64/ARM64 and macOS Universal
+- Add Capacitor v8 Android and iOS native projects
+- Add GitHub Actions release workflows for all 6 platforms
+- Fix vite.config.ts base path for native WebView compatibility
+- Modernise Firebase persistence API (initializeFirestore)
+- Generate all platform icon sizes from AI-generated 1024x1024 icon
+- Add BUILDING.md with full build and distribution guide

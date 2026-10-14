@@ -20,7 +20,7 @@
     "cap:icons": "npx @capacitor/assets generate --iconBackgroundColor black --iconBackgroundColorDark black --splashBackgroundColor black --splashBackgroundColorDark black"
   },
   "dependencies": {
-    "@capacitor/android": "^8.4.1",
+    "@capacitor/android": "^8.4.3",
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.1",
     "@capacitor/core": "^8.4.1",
@@ -30,7 +30,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
-    "express": "^4.21.2",
+    "express": "^4.22.3",
     "firebase": "^12.14.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
@@ -50,6 +50,6 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^8.1.5",
-    "vitest": "^3.0.0"
+    "vitest": "^5.0.3"
   }
 }

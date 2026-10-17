@@ -20,11 +20,11 @@
     "cap:icons": "npx @capacitor/assets generate --iconBackgroundColor black --iconBackgroundColorDark black --splashBackgroundColor black --splashBackgroundColorDark black"
   },
   "dependencies": {
-    "@capacitor/android": "^8.4.3",
+    "@capacitor/android": "^6.0.0",
     "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^8.4.1",
-    "@capacitor/core": "^8.4.1",
-    "@capacitor/ios": "^8.4.1",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
@@ -37,7 +37,7 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "tailwind-merge": "^3.6.0",
-    "vite": "^8.1.5"
+    "vite": "^5.0.0"
   },
   "devDependencies": {
     "@tauri-apps/api": "^2.11.1",
@@ -49,7 +49,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^8.1.5",
+    "vite": "^5.0.0",
     "vitest": "^5.0.3"
   }
 }

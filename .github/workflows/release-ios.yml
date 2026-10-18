@@ -23,10 +23,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'npm'
@@ -89,7 +89,7 @@ jobs:
       # Upload as standalone Actions artifact — downloadable directly from
       # the Actions run page. No release or tag needed.
       - name: Upload IPA as Actions artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ios-unsigned-ipa
           path: agent-studio-${{ env.RELEASE_TAG }}-ios-unsigned.ipa
@@ -97,7 +97,7 @@ jobs:
 
       # Also attach to GitHub Release if triggered by a tag push
       - name: Attach IPA to GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           draft: true
